@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"name": "tuiter-node-server-app",
+			"path": ".."
+		},
+		{
+			"name": "node_modules",
+			"path": "../../.Trash/node_modules"
+		}
+	],
+	"settings": {}
+}

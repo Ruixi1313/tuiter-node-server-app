@@ -1,7 +1,7 @@
 import * as usersDao from "./users-dao.js";
 let users = usersDao;
 
-function AuthenticationController(app){
+function AuthController(app){
 
     const login = (req, res) => { 
         const username = req.body.username;

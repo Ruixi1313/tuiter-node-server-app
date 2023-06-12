@@ -1,4 +1,4 @@
-import people from './users.js'
+import people from './user.js'
 let users = people
 const UserController = (app) => {
    app.get('/api/users', findUsers);
