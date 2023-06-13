@@ -1,64 +1,74 @@
-import * as usersDao from "./users-dao.js";
-let users = usersDao;
-
-function AuthController(app){
-
-    const login = (req, res) => { 
+import * as usersDao from "./users-dao.js"
+var currentUserVar;
+const AuthController = (app) => {
+    const register = (req, res) => {
         const username = req.body.username;
-        const password = req.body.password;
-        if(username && password){
-             const user = users.findUserByCredentials(username, password);
-             if (user) {
-                 req.session["currentUser"] = user;
-                 res.json(user);
-             } else {
-                 res.sendStatus(403);
-             }
+        console.log("username",username)
+        const user = usersDao.findUserByUsername(username);
+        if (user) {
+            res.sendStatus(409)
+            return
         }
-        else {
-         res.sendStatus(403);
+        console.log(req.body)
+        const newUser = { ...req.body, _id: new Date().getTime() + "",firstName: req.body.firstName,lastName: req.body.lastName}
+        usersDao.createUser(newUser)
+        // req.session["currentUser"] = newUser
+        currentUserVar = newUser
+        res.json(newUser)
+    };
+
+    const login = (req, res) => {
+        console.log(req)
+        const username = req.body.username
+        const password = req.body.password
+        if (username && password) {
+            const user = usersDao.findUserByCredentials(username, password)
+            if (user) {
+                currentUserVar = user
+                res.json(user)
+            } else {
+                res.sendStatus(404)
+            }
+        } else {
+            res.sendStatus(404)
         }
-     
-      };
+    };
 
- const register = (req, res) => {
-    const username = req.body.username;
-    const user = users.findUserByUsername(username);
-    if (user) {
-        res.sendStatus(409);
-        return;
-   }
-   const newUser = usersDao.createUser(req.body);
-   req.session["currentUser"] = newUser;
-   res.json(newUser);
-  };
+    const profile = (req, res) => {
+        const currentUser = currentUserVar
+        if (!currentUser) {
+            res.sendStatus(404)
+            return
+        }
+        res.json(currentUser)
+    };
 
- const profile  = (req, res) => { 
-    const currentUser = req.session["currentUser"];
-   if (!currentUser) {
-     res.sendStatus(403);
-     return;
-   }
-   res.json(currentUser);
+    const logout = (req, res) => {
+        req.session.destroy()
+        res.sendStatus(200)
+    };
 
- };
- const logout   = (req, res) => {
-    req.session.destroy();
-   res.sendStatus(200);
-  };
+    const update = (req, res) => {
+        const currentUser = currentUserVar
+        if (!currentUser) {
+            res.sendStatus(404);
+            return;
+        }
+        const uid = currentUser._id;
+        const updatedUser = req.body;
+        const result = usersDao.updateUser(uid, updatedUser);
+        if (result.status === 'ok') {
+            currentUserVar = { ...currentUser, ...updatedUser };
+            res.sendStatus(200);
+        } else {
+            res.sendStatus(500);
+        }
+    };
 
-
- const update   = (req, res) => { 
-    // implement this update
-
-
- };
-
-
- app.post("/api/users/register", register);
- app.post("/api/users/login",    login);
- app.post("/api/users/profile",  profile);
- app.post("/api/users/logout",   logout);
- app.put ("/api/users",          update);
+    app.post("/api/users/register", register);
+    app.post("/api/users/login", login);
+    app.post("/api/users/profile", profile);
+    app.post("/api/users/logout", logout);
+    app.put("/api/users/:_id", update)
 };
 export default AuthController;
