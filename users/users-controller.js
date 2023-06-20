@@ -1,58 +1,57 @@
-import people from "./users.js"
-let users = people
+import * as userDao from "./users-dao.js"
+
 const UserController = (app) => {
-        const findAllUsers = (req, res) => {
+        const findAllUsers = async(req, res) => {
             const username = req.query.username;
             const password = req.query.password;
+            console.log("req.query",req.query)
+            console.log("username",username)
+            console.log("password",password)
             if (username && password) {
-                const user = users.find(
-                    (user) => user.username === username && user.password === password
-                );
+                const user = await userDao.findUserByCredentials(username,password)
                 if (user) {
                     res.json(user);
                 } else {
                     res.sendStatus(404);
                 }
             } else if (username) {
-                const user = users.find((user) => user.username === username);
+                const user = await userDao.findUserByUsername(username)
                 if (user) {
                     res.json(user);
                 } else {
                     res.sendStatus(404);
                 }
             } else {
-                setTimeout(() => {
-                    // res.sendStatus(404);
-                    res.json(users);
-                }, 2000);
+                console.log("yes")
+                const users = await userDao.findAllUsers()
+                res.json(users)
             }
         };
 
-    const findUserById = (req, res) => {
+    const findUserById = async(req, res) => {
         const userId = req.params.uid;
-        const user = users.find(u => u._id === userId)
+        const user = await userDao.findUserById(userId)
         res.json(user)
     }
 
-    const createUser = (req, res) => {
-        const newUser = { ...req.body, _id: (new Date()).getTime() + "" }
-        // const newUser = req.body 
-        // newUser._id = (new Date()).getTime() + '' ;
-        users.push(newUser)
+    const createUser = async(req, res) => {
+        const newUser = await userDao.createUser(req.body) 
         res.json(newUser)
     }
 
-    const deleteUser = (req, res) => {
+    const deleteUser = async(req, res) => {
         const userId = req.params['uid'];
-        users = users.filter(usr => usr._id !== userId)
-        res.sendStatus(200)
+        const status = userDao.deleteUser(userId)
+        res.json(status)
     }
 
-    const updateUser = (req, res) => {
+    const updateUser = async(req, res) => {
         const userId = req.params['uid']
         const updates = req.body
-        users = users.map((usr) => usr._id === userId ? { ...usr, ...updates } : usr)
-        res.sendStatus(200)
+        const status = await userDao.updateUser(userId,updates)
+        const user = await userDao.findUserById(userId)
+        req.session["currentUser"] = user;
+        res.json(status)
     }
     
     app.get("/api/users", findAllUsers)
